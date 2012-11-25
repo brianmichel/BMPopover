@@ -229,23 +229,19 @@ return self;
   self.backgroundView.contentView = self.contentViewController.view;
 
   CGRect originatingRect = [self.containerViewController.view convertRect:rect toView:nil];
-  
-  //self.contentViewController.view.backgroundColor = [UIColor brownColor];
-  //self.backgroundView.backgroundColor = [UIColor greenColor];
-  
+
   UIPopoverArrowDirection bestDirection = [self bestArrowDirectionForRect:originatingRect];
   self.backgroundView.arrowDirection = bestDirection;
-  
+
   CGRect layoutRect = [self layoutRectForArrowDirection:bestDirection withRect:originatingRect];
   CGRect contentRect = [self contentRectForArrowDirection:bestDirection withContainerRect:layoutRect];
 
   self.backgroundView.frame = layoutRect;
   self.backgroundView.contentView.frame = contentRect;
-  
+
   CGFloat arrowOffset = [self arrowOffsetForOriginatingRect:originatingRect layoutRect:layoutRect andArrowDirection:bestDirection];
   self.backgroundView.arrowOffset = arrowOffset;
-  
-  
+
   [self.containerViewController.view addSubview:self.backgroundView];
   self.displayWindow.contentRect = self.backgroundView.frame;
   self.displayWindow.controller = self;
@@ -382,8 +378,6 @@ return self;
   }
 }
 
-#pragma mark - Window Callbacks
-
 @end
 
 @implementation BMPopoverWindow
@@ -400,6 +394,7 @@ return self;
   
   [super touchesEnded:touches withEvent:event];
 }
+
 @end
 
 @implementation BMBasicPopoverBackgroundView
