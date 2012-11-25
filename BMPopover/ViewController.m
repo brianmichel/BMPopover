@@ -8,10 +8,12 @@
 
 #import "ViewController.h"
 #import "BMPopoverController.h"
+#import "KSCustomPopoverBackgroundView.h"
 
-@interface ViewController ()
+@interface ViewController () <BMPopoverControllerDelegate>
 @property (strong) BMPopoverController *popover;
 @property (strong) UIPopoverController *controller;
+@property (strong) UIButton *lastButton;
 @end
 
 @implementation ViewController
@@ -23,27 +25,26 @@
 }
 
 - (IBAction)showPopover:(UIButton *)sender {
+  self.lastButton = sender;
   UITableViewController *vc = [[UITableViewController alloc] initWithStyle:UITableViewStylePlain];
   vc.view.autoresizingMask = UIViewAutoresizingNone;
   vc.contentSizeForViewInPopover = CGSizeMake(200, 150);
   self.popover = [[BMPopoverController alloc] initWithContentViewController:vc];
+  if (self.segmentedControl.selectedSegmentIndex == 0) {
+    self.popover.popoverBackgroundViewClass = [KSCustomPopoverBackgroundView class];
+  }
+  self.popover.popoverBackgroundViewClass = self.segmentedControl.selectedSegmentIndex == 0 ?[KSCustomPopoverBackgroundView class] : nil;
   [self.popover presentPopoverFromRect:sender.frame inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
-  
-//  if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-//    self.controller = [[UIPopoverController alloc] initWithContentViewController:vc];
-//    [self.controller presentPopoverFromRect:sender.frame inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
-//    //[self logSuperViews:self.controller.contentViewController.view];
-//  } else {
-//    self.popover = [[BMPopoverController alloc] initWithContentViewController:vc];
-//    [self.popover presentPopoverFromRect:sender.frame inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
-//  }
+  self.popover.delegate = self;
 }
 
-- (void)logSuperViews:(UIView *)view {
-  if (view.superview) {
-    NSLog(@"SuperView: %@", view.superview);
-    [self logSuperViews:view.superview];
-  }
+#pragma mark - Popover Delegate
+- (BOOL)popoverControllerShouldDismissPopover:(BMPopoverController *)popoverController {
+  return YES;
+}
+
+- (void)popoverControllerDidDismissPopover:(BMPopoverController *)popoverController {
+  self.popover = nil;
 }
 
 - (void)didReceiveMemoryWarning

@@ -10,7 +10,7 @@
 
 @interface BMPopoverWindow : UIWindow
 @property (strong) NSArray *passthroughViews;
-@property (strong) BMPopoverController *controller;
+@property (weak) BMPopoverController *controller;
 @property (assign) CGRect contentRect;
 @end
 
@@ -69,7 +69,7 @@
   if (self) {
     [self commonInit];
   }
-  return self;
+return self;
 }
 
 - (void)setContentView:(UIView *)contentView {
@@ -77,22 +77,17 @@
     [_contentView removeFromSuperview];
   }
   _contentView = contentView;
+  
+  if ([[self class] wantsDefaultContentAppearance]) {
+    _contentView.layer.cornerRadius = 3.0;
+    _contentView.layer.masksToBounds = YES;
+  }
+  
   [self addSubview:_contentView];
-  [self setNeedsLayout];
 }
 
 - (UIView *)contentView {
   return _contentView;
-}
-
-- (void)layoutSubviews {
-  [super layoutSubviews];
-  CGSize contentViewSize = self.contentView.frame.size;
-  UIEdgeInsets insets = [[self class] contentViewInsets];
-  CGFloat arrowHeight = [[self class] arrowHeight];
-  
-  self.frame = CGRectMake(self.frame.origin.x, self.frame.origin.y, contentViewSize.width + insets.left + insets.right + arrowHeight * 2.0, contentViewSize.height + insets.top + insets.bottom + arrowHeight * 2.0);
-  self.contentView.frame = CGRectMake(self.bounds.origin.x + insets.left + arrowHeight, self.bounds.origin.y + insets.top + arrowHeight, self.contentView.frame.size.width, self.contentView.frame.size.height);
 }
 
 @end
@@ -101,7 +96,6 @@
 
 @property (strong) BMPopoverWindow *displayWindow;
 @property (strong) UIViewController *containerViewController;
-@property (strong) UIImageView *arrowImageView;
 @property (strong) BMPopoverBackgroundView *backgroundView;
 @end
 
@@ -125,9 +119,6 @@
     
     self.contentInsets = UIEdgeInsetsZero;
     
-    self.arrowImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 20, 20)];
-    self.arrowImageView.backgroundColor = [UIColor greenColor];
-        
     self.displayWindow = [[BMPopoverWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     self.displayWindow.backgroundColor = [UIColor clearColor];
     self.displayWindow.transform = [UIApplication sharedApplication].keyWindow.transform;
@@ -140,7 +131,6 @@
 #pragma mark - API
 - (void)presentPopoverFromBarButtonItem:(UIBarButtonItem *)item permittedArrowDirections:(UIPopoverArrowDirection)arrowDirections animated:(BOOL)animated {
   if (!self.visible) {
-    //show it
     _visible = YES;
   }
 }
@@ -166,6 +156,12 @@
 }
 
 - (void)dismissPopoverAnimated:(BOOL)animated {
+  if (self.delegate && [self.delegate respondsToSelector:@selector(popoverControllerShouldDismissPopover:)]) {
+    BOOL dismiss = [self.delegate popoverControllerShouldDismissPopover:self];
+    if (!dismiss) {
+      return;
+    }
+  }
   if (self.visible) {
     void (^animations)(void) = ^{
       self.containerViewController.view.alpha = 0.0;
@@ -175,11 +171,17 @@
       [UIView animateWithDuration:0.3 animations:animations completion:^(BOOL finished) {
         self.displayWindow.hidden = YES;
         _visible = NO;
+        if (self.delegate && [self.delegate respondsToSelector:@selector(popoverControllerDidDismissPopover:)]) {
+          [self.delegate popoverControllerDidDismissPopover:self];
+        }
       }];
     } else {
       animations();
       self.displayWindow.hidden = YES;
       _visible = NO;
+      if (self.delegate && [self.delegate respondsToSelector:@selector(popoverControllerDidDismissPopover:)]) {
+        [self.delegate popoverControllerDidDismissPopover:self];
+      }
     }
   }
 }
@@ -212,6 +214,8 @@
   _popoverBackgroundViewClass = popoverBackgroundViewClass;
   if (self.popoverBackgroundViewClass) {
     self.backgroundView = [[_popoverBackgroundViewClass alloc] init];
+  } else {
+    self.backgroundView = [[BMBasicPopoverBackgroundView alloc] init];
   }
 }
 
@@ -221,24 +225,27 @@
 
 #pragma mark - Helpers
 - (void)setupContentViewControllerForRect:(CGRect)rect inView:(UIView *)view withPermittedArrowDirections:(UIPopoverArrowDirection)directions {
-  
-  self.contentViewController.view.backgroundColor = [UIColor magentaColor];
-  
-  
   self.contentViewController.view.frame = CGRectMake(0, 0, self.contentViewController.contentSizeForViewInPopover.width, self.contentViewController.contentSizeForViewInPopover.height);
   self.backgroundView.contentView = self.contentViewController.view;
-  CGRect originatingRect = [self.containerViewController.view convertRect:rect toView:nil];
 
+  CGRect originatingRect = [self.containerViewController.view convertRect:rect toView:nil];
+  
+  //self.contentViewController.view.backgroundColor = [UIColor brownColor];
+  //self.backgroundView.backgroundColor = [UIColor greenColor];
+  
   UIPopoverArrowDirection bestDirection = [self bestArrowDirectionForRect:originatingRect];
   self.backgroundView.arrowDirection = bestDirection;
   
   CGRect layoutRect = [self layoutRectForArrowDirection:bestDirection withRect:originatingRect];
+  CGRect contentRect = [self contentRectForArrowDirection:bestDirection withContainerRect:layoutRect];
+
   self.backgroundView.frame = layoutRect;
+  self.backgroundView.contentView.frame = contentRect;
   
   CGFloat arrowOffset = [self arrowOffsetForOriginatingRect:originatingRect layoutRect:layoutRect andArrowDirection:bestDirection];
   self.backgroundView.arrowOffset = arrowOffset;
-
-
+  
+  
   [self.containerViewController.view addSubview:self.backgroundView];
   self.displayWindow.contentRect = self.backgroundView.frame;
   self.displayWindow.controller = self;
@@ -247,33 +254,80 @@
 - (CGRect)layoutRectForArrowDirection:(UIPopoverArrowDirection)arrowDirection withRect:(CGRect)rect {
   CGRect boundingRect = CGRectMake(10, 10, self.containerViewController.view.frame.size.width - 20, self.containerViewController.view.frame.size.height - 20);
   CGFloat x, y, height, width;
+  UIEdgeInsets insets = [[self.backgroundView class] contentViewInsets];
+  CGFloat arrowHeight = [[self.backgroundView class] arrowHeight];
+  width = self.contentViewController.view.frame.size.width + insets.left + insets.right;
+  height = self.contentViewController.view.frame.size.height + insets.top + insets.bottom;
+  
   switch (arrowDirection) {
     case UIPopoverArrowDirectionUp:
-      x = (rect.origin.x + rect.size.width/2) - self.contentViewController.view.frame.size.width/2;
+      x = (rect.origin.x + rect.size.width/2) - width/2;
       y = CGRectGetMaxY(rect);
+      height += arrowHeight;
       break;
     case UIPopoverArrowDirectionRight:
-      x = rect.origin.x - self.contentViewController.view.frame.size.width;
-      y = (rect.origin.y + (rect.size.height/2)) - self.contentViewController.view.frame.size.height/2;
+      x = rect.origin.x - width;
+      y = (rect.origin.y + (rect.size.height/2)) - height/2;
+      width += arrowHeight;
       break;
     case UIPopoverArrowDirectionDown:
-      x = (rect.origin.x + rect.size.width/2) - self.contentViewController.view.frame.size.width/2;
-      y = rect.origin.y - self.contentViewController.view.frame.size.height;
+      x = (rect.origin.x + rect.size.width/2) - width/2;
+      y = rect.origin.y - height;
+      height += arrowHeight;
       break;
     case UIPopoverArrowDirectionLeft:
       x = CGRectGetMaxX(rect);
-      y = (rect.origin.y + (rect.size.height/2)) - self.contentViewController.view.frame.size.height/2;
+      y = (rect.origin.y + (rect.size.height/2)) - height/2;
+      width += arrowHeight;
       break;
     default:
-      x = round(self.containerViewController.view.frame.size.width/2 - self.contentViewController.view.frame.size.width/2);
-      y = round(self.containerViewController.view.frame.size.height/2 - self.contentViewController.view.frame.size.height/2);
+      x = round(self.containerViewController.view.frame.size.width/2 - width/2);
+      y = round(self.containerViewController.view.frame.size.height/2 - height/2);
       break;
   }
-  width = self.contentViewController.view.frame.size.width;
-  height = self.contentViewController.view.frame.size.height;
   CGFloat correctedX = x < boundingRect.origin.x ? boundingRect.origin.x : x;
   correctedX = correctedX + width > CGRectGetMaxX(boundingRect) ? CGRectGetMaxX(boundingRect) - width : correctedX;
   return CGRectMake(correctedX, y < boundingRect.origin.y ? boundingRect.origin.y : y, width, height);
+}
+
+- (CGRect)contentRectForArrowDirection:(UIPopoverArrowDirection)arrowDirection withContainerRect:(CGRect)containerRect {
+  CGFloat x, y, height, width;
+  UIEdgeInsets insets = [[self.backgroundView class] contentViewInsets];
+  CGFloat arrowHeight = [[self.backgroundView class] arrowHeight];
+  
+  switch (arrowDirection) {
+    case UIPopoverArrowDirectionUp:
+      x = insets.left;
+      y = insets.top + arrowHeight;
+      width = containerRect.size.width - insets.left - insets.right;
+      height = containerRect.size.height - arrowHeight - insets.top - insets.bottom;
+      break;
+    case UIPopoverArrowDirectionRight:
+      x = insets.left;
+      y = insets.top;
+      width = containerRect.size.width - insets.left - insets.right - arrowHeight;
+      height = containerRect.size.height - insets.top - insets.bottom;
+      break;
+    case UIPopoverArrowDirectionDown:
+      x = insets.left;
+      y = insets.top;
+      width = containerRect.size.width - insets.left - insets.right;
+      height = containerRect.size.height - arrowHeight - insets.top - insets.bottom;
+      break;
+    case UIPopoverArrowDirectionLeft:
+      x = arrowHeight + insets.left;
+      y = insets.top;
+      width = containerRect.size.width - insets.left - insets.right - arrowHeight;
+      height = containerRect.size.height - insets.top - insets.bottom;
+      break;
+    default:
+      x = insets.left;
+      y = insets.top;
+      width = containerRect.size.width;
+      height = containerRect.size.height;
+      break;
+  }
+  return CGRectMake(x, y, width, height);
 }
 
 
@@ -312,8 +366,8 @@
     case UIPopoverArrowDirectionUp:
       return originatingRectCenter.x - layoutRectCenter.x;
       break;
-   case UIPopoverArrowDirectionLeft:
-   case UIPopoverArrowDirectionRight:
+    case UIPopoverArrowDirectionLeft:
+    case UIPopoverArrowDirectionRight:
       return originatingRectCenter.y - layoutRectCenter.y;
       break;
     default:
@@ -350,6 +404,8 @@
 
 @implementation BMBasicPopoverBackgroundView
 
+@synthesize fillColor = _fillColor;
+
 - (id)init {
   self = [super init];
   if (self) {
@@ -358,20 +414,21 @@
     self.layer.shadowOffset = CGSizeMake(0, 0);
     self.layer.shadowOpacity = 0.6;
     self.layer.shadowRadius = 10.0;
+    self.fillColor = [UIColor darkGrayColor];
   }
   return self;
 }
 
 + (UIEdgeInsets)contentViewInsets {
-  return UIEdgeInsetsMake(5, 5, 5, 5);
+  return UIEdgeInsetsMake(8, 8, 8, 8);
 }
 
 + (CGFloat)arrowBase {
-  return 30.0;
+  return 35.0;
 }
 
 + (CGFloat)arrowHeight {
-  return 10.0;
+  return 20.0;
 }
 
 - (void)setArrowDirection:(UIPopoverArrowDirection)arrowDirection {
@@ -384,9 +441,18 @@
   [self setNeedsDisplay];
 }
 
+- (void)setFillColor:(UIColor *)fillColor {
+  _fillColor = fillColor;
+  [self setNeedsDisplay];
+}
+
+- (UIColor *)fillColor {
+  return _fillColor;
+}
+
 - (void)drawRect:(CGRect)rect {
   CGContextRef ctx = UIGraphicsGetCurrentContext();
-    
+  
   CGFloat arrowHeight = [BMBasicPopoverBackgroundView arrowHeight];
   
   CGFloat arrowBase = [BMBasicPopoverBackgroundView arrowBase];
@@ -395,46 +461,41 @@
   
   CGFloat outlineOriginX = 0;
   CGFloat outlineOriginY = 0;
-  CGFloat outlineWidth = 0;
-  CGFloat outlineHeight = 0;
+  CGFloat outlineHeight = self.bounds.size.height;
+  CGFloat outlineWidth = self.bounds.size.width;
   switch (self.arrowDirection) {
     case UIPopoverArrowDirectionDown:
-      outlineOriginY = 0;
-      outlineHeight = self.bounds.size.height - arrowHeight;
-      outlineWidth = self.bounds.size.width;
+      outlineHeight -= arrowHeight;
       CGPathMoveToPoint(arrowPath, NULL, round(self.bounds.size.width/2) + (arrowOffset - (arrowBase/2)), outlineHeight);
       CGPathAddLineToPoint(arrowPath, NULL, round(self.bounds.size.width/2) + arrowOffset, self.bounds.size.height);
       CGPathAddLineToPoint(arrowPath, NULL, round(self.bounds.size.width/2) + arrowOffset + (arrowBase/2), outlineHeight);
       break;
     case UIPopoverArrowDirectionUp:
       outlineOriginY = arrowHeight;
-      outlineHeight = self.bounds.size.height - arrowHeight;
-      outlineWidth = self.bounds.size.width;
+      outlineHeight -= arrowHeight;
       CGPathMoveToPoint(arrowPath, NULL, round(self.bounds.size.width/2) + (arrowOffset - (arrowBase/2)), outlineOriginY);
       CGPathAddLineToPoint(arrowPath, NULL, round(self.bounds.size.width/2) + arrowOffset, 0);
       CGPathAddLineToPoint(arrowPath, NULL, round(self.bounds.size.width/2) + arrowOffset + (arrowBase/2), outlineOriginY);
       break;
     case UIPopoverArrowDirectionLeft:
       outlineOriginX = arrowHeight;
-      outlineWidth = self.bounds.size.width - arrowHeight;
-      outlineHeight = self.bounds.size.height;
+      outlineWidth -= arrowHeight;
       CGPathMoveToPoint(arrowPath, NULL, outlineOriginX, round(self.bounds.size.height/2) + (arrowOffset - (arrowBase/2)));
       CGPathAddLineToPoint(arrowPath, NULL, 0, round(self.bounds.size.height/2) + arrowOffset);
       CGPathAddLineToPoint(arrowPath, NULL, outlineOriginX, round(self.bounds.size.height/2) + arrowOffset + (arrowBase/2));
       break;
     case UIPopoverArrowDirectionRight:
-      outlineOriginX = 0;
-      outlineWidth = self.bounds.size.width - arrowHeight;
+      outlineWidth -= arrowHeight;
+      CGPathMoveToPoint(arrowPath, NULL, self.bounds.size.width - arrowHeight, round(self.bounds.size.height/2) + (arrowOffset - (arrowBase/2)));
+      CGPathAddLineToPoint(arrowPath, NULL, self.bounds.size.width, round(self.bounds.size.height/2) + arrowOffset);
+      CGPathAddLineToPoint(arrowPath, NULL, self.bounds.size.width - arrowHeight, round(self.bounds.size.height/2) + (arrowOffset + (arrowBase/2)));
       break;
     default:
-      outlineOriginX = 0;
-      outlineOriginY = 0;
-      outlineWidth = self.bounds.size.width;
-      outlineHeight = self.bounds.size.height;
       break;
   }
-  UIBezierPath *outerPath = [UIBezierPath bezierPathWithRoundedRect:CGRectInset(self.bounds, arrowHeight, arrowHeight) cornerRadius:5.0];
-  CGColorRef fillColor = [UIColor darkGrayColor].CGColor;
+  CGRect outlineRect = CGRectMake(outlineOriginX, outlineOriginY, outlineWidth, outlineHeight);
+  UIBezierPath *outerPath = [UIBezierPath bezierPathWithRoundedRect:outlineRect cornerRadius:5.0];
+  CGColorRef fillColor = self.fillColor.CGColor;
   
   CGContextSaveGState(ctx);
   CGContextSetStrokeColorWithColor(ctx, [UIColor redColor].CGColor);
@@ -447,7 +508,7 @@
   
   CGContextSaveGState(ctx);
   CGContextSetFillColorWithColor(ctx, fillColor);
-
+  
   CGContextAddPath(ctx, arrowPath);
   CGContextFillPath(ctx);
   CFRelease(arrowPath);

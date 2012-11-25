@@ -10,5 +10,7 @@
 
 @interface ViewController : UIViewController
 
+@property (strong) IBOutlet UISegmentedControl *segmentedControl;
+
 - (IBAction)showPopover:(UIButton *)sender;
 @end
