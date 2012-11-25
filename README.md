@@ -32,3 +32,6 @@ Contribute
 
 Feel free to open an issue and be detailed as to the weirdness you're experiencing. Or! Fork the repo, make a topic branch, and send me a pull request. Any work you do, PLEASE PLEASE PLEASE test it on iPad and iPhone :) Feel free to drop me a line on Twitter as well, [@brianmichel](http://www.twitter.com/brianmichel)
 
+=======
+
+UIPopoverController replacement for iPhone &amp; iPad
