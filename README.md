@@ -1,5 +1,5 @@
 BMPopover
-=========
+=====
 ---------
 
 An early attempt at pulling over the UIPopoverController control for iPhone. As you can tell by the classes, this **CLOSELY** mimics the `UIPopoverController` and `UIPopoverBackgroundView` interfaces to facilitate interoperability between classes. 
