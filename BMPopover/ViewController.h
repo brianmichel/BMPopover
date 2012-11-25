@@ -10,4 +10,5 @@
 
 @interface ViewController : UIViewController
 
+- (IBAction)showPopover:(UIButton *)sender;
 @end

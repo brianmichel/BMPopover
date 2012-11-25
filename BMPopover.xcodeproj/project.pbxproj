@@ -19,6 +19,8 @@
 		72A4FB3A165DA61400D17FFE /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 72A4FB39165DA61400D17FFE /* ViewController.m */; };
 		72A4FB3D165DA61400D17FFE /* ViewController_iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 72A4FB3B165DA61400D17FFE /* ViewController_iPhone.xib */; };
 		72A4FB40165DA61400D17FFE /* ViewController_iPad.xib in Resources */ = {isa = PBXBuildFile; fileRef = 72A4FB3E165DA61400D17FFE /* ViewController_iPad.xib */; };
+		72A4FB48165DA66900D17FFE /* BMPopoverController.m in Sources */ = {isa = PBXBuildFile; fileRef = 72A4FB47165DA66900D17FFE /* BMPopoverController.m */; };
+		72A4FB4B165DAD4700D17FFE /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72A4FB4A165DAD4700D17FFE /* QuartzCore.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,6 +41,9 @@
 		72A4FB39165DA61400D17FFE /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		72A4FB3C165DA61400D17FFE /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/ViewController_iPhone.xib; sourceTree = "<group>"; };
 		72A4FB3F165DA61400D17FFE /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/ViewController_iPad.xib; sourceTree = "<group>"; };
+		72A4FB46165DA66900D17FFE /* BMPopoverController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BMPopoverController.h; path = Classes/BMPopoverController.h; sourceTree = "<group>"; };
+		72A4FB47165DA66900D17FFE /* BMPopoverController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BMPopoverController.m; path = Classes/BMPopoverController.m; sourceTree = "<group>"; };
+		72A4FB4A165DAD4700D17FFE /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,6 +51,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				72A4FB4B165DAD4700D17FFE /* QuartzCore.framework in Frameworks */,
 				72A4FB21165DA61400D17FFE /* UIKit.framework in Frameworks */,
 				72A4FB23165DA61400D17FFE /* Foundation.framework in Frameworks */,
 				72A4FB25165DA61400D17FFE /* CoreGraphics.framework in Frameworks */,
@@ -75,6 +81,7 @@
 		72A4FB1F165DA61400D17FFE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				72A4FB4A165DAD4700D17FFE /* QuartzCore.framework */,
 				72A4FB20165DA61400D17FFE /* UIKit.framework */,
 				72A4FB22165DA61400D17FFE /* Foundation.framework */,
 				72A4FB24165DA61400D17FFE /* CoreGraphics.framework */,
@@ -85,6 +92,7 @@
 		72A4FB26165DA61400D17FFE /* BMPopover */ = {
 			isa = PBXGroup;
 			children = (
+				72A4FB49165DA71D00D17FFE /* Classes */,
 				72A4FB2F165DA61400D17FFE /* AppDelegate.h */,
 				72A4FB30165DA61400D17FFE /* AppDelegate.m */,
 				72A4FB38165DA61400D17FFE /* ViewController.h */,
@@ -108,6 +116,15 @@
 				72A4FB36165DA61400D17FFE /* Default-568h@2x.png */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		72A4FB49165DA71D00D17FFE /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				72A4FB46165DA66900D17FFE /* BMPopoverController.h */,
+				72A4FB47165DA66900D17FFE /* BMPopoverController.m */,
+			);
+			name = Classes;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -180,6 +197,7 @@
 				72A4FB2D165DA61400D17FFE /* main.m in Sources */,
 				72A4FB31165DA61400D17FFE /* AppDelegate.m in Sources */,
 				72A4FB3A165DA61400D17FFE /* ViewController.m in Sources */,
+				72A4FB48165DA66900D17FFE /* BMPopoverController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -306,6 +324,7 @@
 				72A4FB45165DA61400D17FFE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
