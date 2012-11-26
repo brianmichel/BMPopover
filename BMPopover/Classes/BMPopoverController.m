@@ -258,7 +258,6 @@ return self;
   CGFloat arrowHeight = [[self.backgroundView class] arrowHeight];
   width = self.contentViewController.view.frame.size.width + insets.left + insets.right;
   height = self.contentViewController.view.frame.size.height + insets.top + insets.bottom;
-  NSLog(@"RECT TO LAYOUT AROUND: %@, BOUNDING RECT: %@", NSStringFromCGRect(rect), NSStringFromCGRect(boundingRect));
 
   switch (arrowDirection) {
     case UIPopoverArrowDirectionUp:
