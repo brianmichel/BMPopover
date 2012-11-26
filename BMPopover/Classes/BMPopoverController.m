@@ -227,8 +227,11 @@ return self;
 - (void)setupContentViewControllerForRect:(CGRect)rect inView:(UIView *)view withPermittedArrowDirections:(UIPopoverArrowDirection)directions {
   self.contentViewController.view.frame = CGRectMake(0, 0, self.contentViewController.contentSizeForViewInPopover.width, self.contentViewController.contentSizeForViewInPopover.height);
   self.backgroundView.contentView = self.contentViewController.view;
-
-  CGRect originatingRect = [self.containerViewController.view convertRect:rect toView:nil];
+  
+  CGRect originatingRect = [self.containerViewController.view convertRect:rect fromView:view];
+  //there seems to be a weird issue, where you don't get a rect back that knows about the scale of the screen...
+  CGFloat scaleFactor = [UIScreen mainScreen].scale;
+  originatingRect = CGRectMake(originatingRect.origin.x/scaleFactor, originatingRect.origin.y/scaleFactor, originatingRect.size.width/scaleFactor, originatingRect.size.height/scaleFactor);
 
   UIPopoverArrowDirection bestDirection = [self bestArrowDirectionForRect:originatingRect];
   self.backgroundView.arrowDirection = bestDirection;
@@ -423,7 +426,7 @@ return self;
 }
 
 + (CGFloat)arrowHeight {
-  return 20.0;
+  return 15.0;
 }
 
 - (void)setArrowDirection:(UIPopoverArrowDirection)arrowDirection {

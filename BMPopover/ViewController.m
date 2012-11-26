@@ -9,6 +9,7 @@
 #import "ViewController.h"
 #import "BMPopoverController.h"
 #import "KSCustomPopoverBackgroundView.h"
+#import "CustomTableViewController.h"
 
 @interface ViewController () <BMPopoverControllerDelegate>
 @property (strong) BMPopoverController *popover;
@@ -26,7 +27,7 @@
 
 - (IBAction)showPopover:(UIButton *)sender {
   self.lastButton = sender;
-  UITableViewController *vc = [[UITableViewController alloc] initWithStyle:UITableViewStylePlain];
+  CustomTableViewController *vc = [[CustomTableViewController alloc] initWithStyle:UITableViewStylePlain];
   vc.view.autoresizingMask = UIViewAutoresizingNone;
   vc.contentSizeForViewInPopover = CGSizeMake(200, 150);
   self.popover = [[BMPopoverController alloc] initWithContentViewController:vc];
