@@ -78,7 +78,8 @@
   vc.contentSizeForViewInPopover = CGSizeMake(200, 110);
   self.controller = [[BMPopoverController alloc] initWithContentViewController:vc];
   CGRect rect = [tableView rectForRowAtIndexPath:indexPath];
-  [self.controller presentPopoverFromRect:rect inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
+  CGRect convertedRect = [self.view convertRect:rect toView:nil];
+  [self.controller presentPopoverFromRect:convertedRect inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
   self.controller.delegate = self;
 }
 

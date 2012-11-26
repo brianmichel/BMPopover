@@ -227,13 +227,11 @@ return self;
 - (void)setupContentViewControllerForRect:(CGRect)rect inView:(UIView *)view withPermittedArrowDirections:(UIPopoverArrowDirection)directions {
   self.contentViewController.view.frame = CGRectMake(0, 0, self.contentViewController.contentSizeForViewInPopover.width, self.contentViewController.contentSizeForViewInPopover.height);
   self.backgroundView.contentView = self.contentViewController.view;
-  
   CGRect originatingRect = [self.containerViewController.view convertRect:rect fromView:view];
-  //there seems to be a weird issue, where you don't get a rect back that knows about the scale of the screen...
-  CGFloat scaleFactor = [UIScreen mainScreen].scale;
-  originatingRect = CGRectMake(originatingRect.origin.x/scaleFactor, originatingRect.origin.y/scaleFactor, originatingRect.size.width/scaleFactor, originatingRect.size.height/scaleFactor);
 
-  UIPopoverArrowDirection bestDirection = [self bestArrowDirectionForRect:originatingRect];
+  originatingRect = rect;
+    
+  UIPopoverArrowDirection bestDirection = [self bestArrowDirectionForRect:rect];
   self.backgroundView.arrowDirection = bestDirection;
 
   CGRect layoutRect = [self layoutRectForArrowDirection:bestDirection withRect:originatingRect];
@@ -251,13 +249,17 @@ return self;
 }
 
 - (CGRect)layoutRectForArrowDirection:(UIPopoverArrowDirection)arrowDirection withRect:(CGRect)rect {
-  CGRect boundingRect = CGRectMake(10, 10, self.containerViewController.view.frame.size.width - 20, self.containerViewController.view.frame.size.height - 20);
+  BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
+  CGFloat screenWidth = isLandscape ? self.containerViewController.view.frame.size.height : self.containerViewController.view.frame.size.width;
+  CGFloat screenHeight = isLandscape ? self.containerViewController.view.frame.size.width : self.containerViewController.view.frame.size.height;
+  CGRect boundingRect = CGRectMake(10, 10, screenWidth - 20, screenHeight - 20);
   CGFloat x, y, height, width;
   UIEdgeInsets insets = [[self.backgroundView class] contentViewInsets];
   CGFloat arrowHeight = [[self.backgroundView class] arrowHeight];
   width = self.contentViewController.view.frame.size.width + insets.left + insets.right;
   height = self.contentViewController.view.frame.size.height + insets.top + insets.bottom;
-  
+  NSLog(@"RECT TO LAYOUT AROUND: %@, BOUNDING RECT: %@", NSStringFromCGRect(rect), NSStringFromCGRect(boundingRect));
+
   switch (arrowDirection) {
     case UIPopoverArrowDirectionUp:
       x = (rect.origin.x + rect.size.width/2) - width/2;
@@ -286,7 +288,11 @@ return self;
   }
   CGFloat correctedX = x < boundingRect.origin.x ? boundingRect.origin.x : x;
   correctedX = correctedX + width > CGRectGetMaxX(boundingRect) ? CGRectGetMaxX(boundingRect) - width : correctedX;
-  return CGRectMake(correctedX, y < boundingRect.origin.y ? boundingRect.origin.y : y, width, height);
+  
+  CGFloat correctedY = y < boundingRect.origin.y ? boundingRect.origin.y : y;
+  correctedY = (correctedY + height) > CGRectGetMaxY(boundingRect) ? CGRectGetMaxY(boundingRect) - height : correctedY;
+  
+  return CGRectMake(correctedX, correctedY, width, height);
 }
 
 - (CGRect)contentRectForArrowDirection:(UIPopoverArrowDirection)arrowDirection withContainerRect:(CGRect)containerRect {
@@ -331,7 +337,8 @@ return self;
 
 
 - (UIPopoverArrowDirection)bestArrowDirectionForRect:(CGRect)rect {
-  CGRect screenRect = self.containerViewController.view.frame;
+  BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
+  CGRect screenRect = CGRectMake(isLandscape ? self.containerViewController.view.frame.origin.y : self.containerViewController.view.frame.origin.x, isLandscape ? self.containerViewController.view.frame.origin.x : self.containerViewController.view.frame.origin.y, isLandscape ? self.containerViewController.view.frame.size.height : self.containerViewController.view.frame.size.width, isLandscape ? self.containerViewController.view.frame.size.width : self.containerViewController.view.frame.size.height);
   CGFloat leftSpace = rect.origin.x - screenRect.origin.x;
   CGFloat rightSpace = CGRectGetMaxX(screenRect) - CGRectGetMaxX(rect);
   CGFloat topSpace = rect.origin.y - screenRect.origin.y;
