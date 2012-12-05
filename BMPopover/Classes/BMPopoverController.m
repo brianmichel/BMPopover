@@ -7,11 +7,66 @@
 //
 
 #import "BMPopoverController.h"
+#import <objc/runtime.h>
 
 @interface BMPopoverWindow : UIWindow
 @property (strong) NSArray *passthroughViews;
 @property (weak) BMPopoverController *controller;
 @property (assign) CGRect contentRect;
+@end
+
+static char kBMPopoverExtensionUIViewControllerKey;
+
+@implementation UIViewController (BMPopoverExtensions)
+
+- (void)setPopoverController:(BMPopoverController *)popoverController {
+  objc_setAssociatedObject(self, &kBMPopoverExtensionUIViewControllerKey, (id)popoverController, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (BMPopoverController *)popoverController {
+  BMPopoverController *controller = objc_getAssociatedObject(self, &kBMPopoverExtensionUIViewControllerKey);
+  if (controller) {
+    return controller;
+  }
+  return nil;
+}
+
+@end
+
+@implementation UIBarButtonItem (BMPopoverExtensions)
+
+- (CGRect)frameInView:(UIView *)v {
+	
+	UIView *theView = self.customView;
+	if (!theView && [self respondsToSelector:@selector(view)]) {
+		theView = [self performSelector:@selector(view)];
+	}
+	
+	UIView *parentView = theView.superview;
+	NSArray *subviews = parentView.subviews;
+	
+	NSUInteger indexOfView = [subviews indexOfObject:theView];
+	NSUInteger subviewCount = subviews.count;
+	
+	if (subviewCount > 0 && indexOfView != NSNotFound) {
+		UIView *button = [parentView.subviews objectAtIndex:indexOfView];
+		return [button convertRect:button.bounds toView:v];
+	} else {
+		return CGRectZero;
+	}
+}
+
+- (UIView *)superview {
+	
+	UIView *theView = self.customView;
+	if (!theView && [self respondsToSelector:@selector(view)]) {
+		theView = [self performSelector:@selector(view)];
+	}
+	
+	UIView *parentView = theView.superview;
+	return parentView;
+}
+
 @end
 
 @interface BMPopoverBackgroundView ()
@@ -130,9 +185,9 @@ return self;
 }
 #pragma mark - API
 - (void)presentPopoverFromBarButtonItem:(UIBarButtonItem *)item permittedArrowDirections:(UIPopoverArrowDirection)arrowDirections animated:(BOOL)animated {
-  if (!self.visible) {
-    _visible = YES;
-  }
+  UIView *view = self.displayWindow;
+  CGRect rect = [item frameInView:view];
+  [self presentPopoverFromRect:rect inView:view permittedArrowDirections:arrowDirections animated:animated];
 }
 
 - (void)presentPopoverFromRect:(CGRect)rect inView:(UIView *)view permittedArrowDirections:(UIPopoverArrowDirection)arrowDirections animated:(BOOL)animated {
@@ -140,7 +195,7 @@ return self;
     void (^animations)(void) = ^{
       self.containerViewController.view.alpha = 1.0;
     };
-    
+    self.contentViewController.popoverController = self;
     [self setupContentViewControllerForRect:rect inView:view withPermittedArrowDirections:arrowDirections];
     [self.displayWindow makeKeyAndVisible];
     
@@ -393,11 +448,33 @@ return self;
 /*
  1.) if a given touch is within a passthroughview, pass it on.
  */
+- (void)sendEvent:(UIEvent *)event {
+  [super sendEvent:event];
+}
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+  //check for passthroughRects
+  for (UIView *view; ; <#increment#>) {
+    <#statements#>
+  }
+  [self.nextResponder touchesBegan:touches withEvent:event];
+}
+
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
   UITouch *anyTouch = [touches anyObject];
   if (!CGRectContainsPoint(self.contentRect, [anyTouch locationInView:self])) {
     [self.controller dismissPopoverAnimated:YES];
+    return;
+  } else {
+    //check for passthroughRects
+    UIWindow *firstNonPopoverWindow = nil;
+    for (UIWindow *window in [UIApplication sharedApplication].windows) {
+      if (![window isKindOfClass:[BMPopoverWindow class]]) {
+        firstNonPopoverWindow = window;
+        break;
+      }
+    }
+    [firstNonPopoverWindow touchesEnded:touches withEvent:event];
     return;
   }
   

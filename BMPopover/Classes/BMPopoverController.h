@@ -43,6 +43,15 @@
 - (void)presentPopoverFromBarButtonItem:(UIBarButtonItem *)item permittedArrowDirections:(UIPopoverArrowDirection)arrowDirections animated:(BOOL)animated;
 @end
 
+@interface UIViewController (BMPopoverExtensions)
+@property (nonatomic, readonly, strong) BMPopoverController *popoverController;
+@end
+
+@interface UIBarButtonItem(BMPopoverExtensions)
+- (CGRect)frameInView:(UIView *)v;
+- (UIView *)superview;
+@end
+
 //Basically the same thing as a UIPopoverBackgroundView
 @interface BMPopoverBackgroundView : UIView
 
