@@ -282,20 +282,17 @@ return self;
 - (void)setupContentViewControllerForRect:(CGRect)rect inView:(UIView *)view withPermittedArrowDirections:(UIPopoverArrowDirection)directions {
   self.contentViewController.view.frame = CGRectMake(0, 0, self.contentViewController.contentSizeForViewInPopover.width, self.contentViewController.contentSizeForViewInPopover.height);
   self.backgroundView.contentView = self.contentViewController.view;
-  CGRect originatingRect = [self.containerViewController.view convertRect:rect fromView:view];
-
-  originatingRect = rect;
     
   UIPopoverArrowDirection bestDirection = [self bestArrowDirectionForRect:rect];
   self.backgroundView.arrowDirection = bestDirection;
 
-  CGRect layoutRect = [self layoutRectForArrowDirection:bestDirection withRect:originatingRect];
+  CGRect layoutRect = [self layoutRectForArrowDirection:bestDirection withRect:rect];
   CGRect contentRect = [self contentRectForArrowDirection:bestDirection withContainerRect:layoutRect];
 
   self.backgroundView.frame = layoutRect;
   self.backgroundView.contentView.frame = contentRect;
 
-  CGFloat arrowOffset = [self arrowOffsetForOriginatingRect:originatingRect layoutRect:layoutRect andArrowDirection:bestDirection];
+  CGFloat arrowOffset = [self arrowOffsetForOriginatingRect:rect layoutRect:layoutRect andArrowDirection:bestDirection];
   self.backgroundView.arrowOffset = arrowOffset;
 
   [self.containerViewController.view addSubview:self.backgroundView];
@@ -321,13 +318,13 @@ return self;
       height += arrowHeight;
       break;
     case UIPopoverArrowDirectionRight:
-      x = rect.origin.x - width;
+      x = rect.origin.x - width - arrowHeight;
       y = (rect.origin.y + (rect.size.height/2)) - height/2;
       width += arrowHeight;
       break;
     case UIPopoverArrowDirectionDown:
       x = (rect.origin.x + rect.size.width/2) - width/2;
-      y = rect.origin.y - height;
+      y = rect.origin.y - height - arrowHeight;
       height += arrowHeight;
       break;
     case UIPopoverArrowDirectionLeft:
@@ -448,17 +445,6 @@ return self;
 /*
  1.) if a given touch is within a passthroughview, pass it on.
  */
-- (void)sendEvent:(UIEvent *)event {
-  [super sendEvent:event];
-}
-- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
-  //check for passthroughRects
-  for (UIView *view; ; <#increment#>) {
-    <#statements#>
-  }
-  [self.nextResponder touchesBegan:touches withEvent:event];
-}
-
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
   UITouch *anyTouch = [touches anyObject];
