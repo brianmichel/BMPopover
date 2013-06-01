@@ -22,13 +22,13 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:@"POP" style:UIBarButtonItemStyleBordered target:self action:@selector(showFromBarButtonItem:)];
 	// Do any additional setup after loading the view, typically from a nib.
 }
 
 - (IBAction)showPopover:(UIButton *)sender {
   self.lastButton = sender;
   CustomTableViewController *vc = [[CustomTableViewController alloc] initWithStyle:UITableViewStylePlain];
-  vc.view.autoresizingMask = UIViewAutoresizingNone;
   vc.contentSizeForViewInPopover = CGSizeMake(200, 150);
   self.popover = [[BMPopoverController alloc] initWithContentViewController:vc];
   if (self.segmentedControl.selectedSegmentIndex == 0) {
@@ -37,6 +37,18 @@
   self.popover.popoverBackgroundViewClass = self.segmentedControl.selectedSegmentIndex == 0 ?[KSCustomPopoverBackgroundView class] : nil;
   [self.popover presentPopoverFromRect:sender.frame inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
   self.popover.delegate = self;
+}
+
+- (void)showFromBarButtonItem:(UIBarButtonItem *)sender {
+    CustomTableViewController *vc = [[CustomTableViewController alloc] initWithStyle:UITableViewStylePlain];
+    vc.contentSizeForViewInPopover = CGSizeMake(200, 150);
+    self.popover = [[BMPopoverController alloc] initWithContentViewController:vc];
+    if (self.segmentedControl.selectedSegmentIndex == 0) {
+        self.popover.popoverBackgroundViewClass = [KSCustomPopoverBackgroundView class];
+    }
+    self.popover.popoverBackgroundViewClass = self.segmentedControl.selectedSegmentIndex == 0 ?[KSCustomPopoverBackgroundView class] : nil;
+    [self.popover presentPopoverFromBarButtonItem:sender permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
+    self.popover.delegate = self;
 }
 
 #pragma mark - Popover Delegate
